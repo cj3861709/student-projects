@@ -1,0 +1,4 @@
+<!-- 字符串资源文件，定义应用名及各界面文本 -->
+<resources>
+    <string name="app_name">数字名片</string>
+</resources>
