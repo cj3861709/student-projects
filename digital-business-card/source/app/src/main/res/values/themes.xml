@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 主题资源文件，定义应用整体主题风格（Material Light无ActionBar） -->
+<resources>
+
+    <style name="Theme.DigitalCard" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
