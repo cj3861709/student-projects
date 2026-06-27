@@ -12,9 +12,11 @@ spark = SparkSession.builder \
 
 # ==================== 定义消息 Schema ====================
 # 与 Kafka 中 JSON 消息的结构一致
+# 股票代码
+# 交易时间字符串
 schema = StructType() \
-    .add("symbol", StringType()) \          # 股票代码
-    .add("trade_time", StringType()) \      # 交易时间字符串
+    .add("symbol", StringType()) \
+    .add("trade_time", StringType()) \
     .add("open", DoubleType()) \
     .add("high", DoubleType()) \
     .add("low", DoubleType()) \
@@ -23,12 +25,15 @@ schema = StructType() \
     .add("data_type", StringType())          # 数据类型：daily/realtime
 
 # ==================== 从 Kafka 读取流数据 ====================
+# 订阅主题
+# 从最早开始消费
+# 允许数据丢失继续运行
 kafka_df = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "localhost:9092") \
-    .option("subscribe", "stock-prices") \               # 订阅主题
-    .option("startingOffsets", "earliest") \             # 从最早开始消费
-    .option("failOnDataLoss", "false") \                 # 允许数据丢失继续运行
+    .option("subscribe", "stock-prices") \
+    .option("startingOffsets", "earliest") \
+    .option("failOnDataLoss", "false") \
     .load()
 
 # ==================== 解析 JSON ====================
