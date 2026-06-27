@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider路径配置，定义缓存/私有文件目录对外暴露的路径（头像/分享/拍照） -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="shared_images" path="shared/" />
+    <cache-path name="temp_camera" path="temp_camera/" />
+    <files-path name="avatars" path="avatars/" />
+</paths>
