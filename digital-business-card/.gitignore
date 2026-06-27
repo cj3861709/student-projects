@@ -1,0 +1,27 @@
+# Gradle
+.gradle/
+build/
+app/build/
+local.properties
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Android
+*.apk
+*.aab
+*.ap_
+*.dex
+bin/
+gen/
+out/
+
+# Kotlin
+.kotlin/
+
+# Others
+*.log
+*.bin
+*.lock
