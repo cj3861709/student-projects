@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.log
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Data
+*.csv
+*.zip
+dataset/
+
+# Config
+collector.log
+preprocess.log
+sentiment.log
