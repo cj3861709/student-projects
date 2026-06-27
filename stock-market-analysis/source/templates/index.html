@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>股票实时行情分析系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f2f5; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .chart-box { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .kline-chart { width: 900px; height: 500px; }
+        .sentiment-chart { width: 400px; height: 300px; }
+        .prediction-card { width: 300px; padding: 15px; background: #e3f2fd; border-radius: 8px; }
+        select, button { padding: 8px 12px; margin: 10px 0; font-size: 14px; }
+        h2 { margin: 0 0 10px 0; color: #333; }
+        .value { font-size: 24px; font-weight: bold; color: #1976d2; }
+    </style>
+</head>
+<body>
+    <h1>📈 股票市场实时行情分析与预测系统</h1>
+    <div>
+        <label>选择股票: </label>
+        <select id="stockSelector">
+            <!-- 以下为 20 只股票，包括之前加的那 15 只 -->
+            <option value="000001">平安银行 (000001)</option>
+            <option value="600036">招商银行 (600036)</option>
+            <option value="000858">五粮液 (000858)</option>
+            <option value="601318">中国平安 (601318)</option>
+            <option value="002415">海康威视 (002415)</option>
+            <option value="000002">万科A (000002)</option>
+            <option value="600519">贵州茅台 (600519)</option>
+            <option value="000333">美的集团 (000333)</option>
+            <option value="002594">比亚迪 (002594)</option>
+            <option value="300750">宁德时代 (300750)</option>
+            <option value="601166">兴业银行 (601166)</option>
+            <option value="600016">民生银行 (600016)</option>
+            <option value="000651">格力电器 (000651)</option>
+            <option value="002304">洋河股份 (002304)</option>
+            <option value="600030">中信证券 (600030)</option>
+            <option value="601888">中国中免 (601888)</option>
+            <option value="002352">顺丰控股 (002352)</option>
+            <option value="600309">万华化学 (600309)</option>
+            <option value="002475">立讯精密 (002475)</option>
+            <option value="600900">长江电力 (600900)</option>
+        </select>
+        <button onclick="refreshAll()">刷新数据</button>
+    </div>
+    <div class="container">
+        <div class="chart-box">
+            <h2>📊 K线走势图</h2>
+            <div id="klineChart" class="kline-chart"></div>
+        </div>
+        <div class="chart-box">
+            <h2>🤖 实时预测</h2>
+            <div id="predictionCard" class="prediction-card">
+                <p>加载中...</p>
+            </div>
+        </div>
+        <div class="chart-box">
+            <h2>📰 新闻情感仪表盘</h2>
+            <div id="sentimentGauge" class="sentiment-chart"></div>
+        </div>
+    </div>
+    <div class="chart-box" style="margin-top: 20px;">
+        <h2>📰 最新新闻与情感分析</h2>
+        <div id="newsList" style="max-height: 300px; overflow-y: auto;"></div>
+    </div>
+
+    <script>
+        let klineChart, sentimentGauge;
+        let currentStock = '000001';
+
+        $(document).ready(function() {
+            klineChart = echarts.init(document.getElementById('klineChart'));
+            sentimentGauge = echarts.init(document.getElementById('sentimentGauge'));
+            $('#stockSelector').change(function() {
+                currentStock = $(this).val();
+                refreshAll();
+            });
+            refreshAll();
+            setInterval(refreshAll, 30000);
+        });
+
+        function refreshAll() {
+            loadKline();
+            loadPrediction();
+            loadSentiment();
+            loadNews();
+        }
+
+        function loadKline() {
+            $.get(`/api/kline/${currentStock}?days=60`, function(data) {
+                if (!data || data.length === 0) return;
+                const dates = data.map(d => d.time.substring(0, 19));
+                const ohlcData = data.map(d => [d.open, d.close, d.low, d.high]);
+                const volumes = data.map(d => d.volume);
+                klineChart.setOption({
+                    title: { text: `${currentStock} - 近60根K线` },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    xAxis: { data: dates, type: 'category' },
+                    yAxis: [{ scale: true }, { scale: true, position: 'right' }],
+                    series: [{
+                        name: 'K线', type: 'candlestick', data: ohlcData,
+                        itemStyle: { color: '#ef232a', color0: '#14b143' }
+                    }, {
+                        name: '成交量', type: 'bar', data: volumes, yAxisIndex: 1,
+                        itemStyle: { color: '#888888' }
+                    }]
+                });
+            });
+        }
+
+        function loadPrediction() {
+            $.get(`/api/prediction/${currentStock}`, function(data) {
+                if (!data || !data.predicted_direction) {
+                    $('#predictionCard').html('<p>暂无预测数据</p>');
+                    return;
+                }
+                const arrow = data.predicted_direction === 'UP' ? '📈' : (data.predicted_direction === 'DOWN' ? '📉' : '➡️');
+                $('#predictionCard').html(`
+                    <p><strong>预测方向:</strong> <span class="value">${arrow} ${data.predicted_direction}</span></p>
+                    <p><strong>置信度:</strong> ${(data.confidence * 100).toFixed(1)}%</p>
+                    <p><strong>预测时间:</strong> ${data.predict_time.substring(0, 19)}</p>
+                `);
+            });
+        }
+
+        function loadSentiment() {
+            $.get(`/api/sentiment/${currentStock}`, function(data) {
+                if (!data || data.length === 0) {
+                    sentimentGauge.setOption({ series: [{ data: [{ value: 0.5, name: '市场情绪' }] }] });
+                    return;
+                }
+                const avgSentiment = data.reduce((sum, d) => sum + d.sentiment_score, 0) / data.length;
+                sentimentGauge.setOption({
+                    series: [{
+                        type: 'gauge', min: 0, max: 1,
+                        axisLabel: { formatter: '{value}' },
+                        detail: { formatter: '{value}', fontSize: 20 },
+                        data: [{ value: avgSentiment, name: '新闻情感指数' }]
+                    }]
+                });
+            });
+        }
+
+        function loadNews() {
+            $.get(`/api/sentiment/${currentStock}`, function(data) {
+                if (!data || data.length === 0) {
+                    $('#newsList').html('<p>暂无新闻数据</p>');
+                    return;
+                }
+                let html = '<ul style="list-style: none; padding: 0;">';
+                data.forEach(news => {
+                    const sentimentColor = news.sentiment_score > 0.6 ? 'green' : (news.sentiment_score < 0.4 ? 'red' : 'orange');
+                    html += `<li style="padding: 8px; border-bottom: 1px solid #eee;">
+                        <strong>${news.title}</strong><br>
+                        <small>情感得分: <span style="color: ${sentimentColor};">${news.sentiment_score.toFixed(2)}</span> | ${news.publish_time}</small>
+                    </li>`;
+                });
+                html += '</ul>';
+                $('#newsList').html(html);
+            });
+        }
+    </script>
+</body>
+</html>
